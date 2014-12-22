@@ -1,0 +1,5 @@
+dependancies:
+
+- libevent:	2.0.0 or later
+- ecasound:	2.9.0 or later
+
