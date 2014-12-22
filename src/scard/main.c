@@ -2,7 +2,7 @@
  *  main.c
  *  scard
  *
- *  Created by Michel Depeige on 10/10/07.
+ *  Created by Michel Depeige on 22/12/2014.
  *  Copyright (c) 2014 Michel Depeige.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -30,7 +30,11 @@
 #endif
 #include <event.h>
 #ifdef HAVE_CONFIG_H
+#include <stdlib.h>
 #include "config.h"
+#include "conf.h"
+#include "main.h"
+#include "tools.h"
 #endif
 
 /* prototypes */
@@ -38,5 +42,21 @@ conf_t	g_conf;
 
 int	main(int argc, char *argv[])
 {
+	struct event_base	*sched;
+
+	/* init the program, check opt, init some stuff... */
+	checkopt(argc, argv);
+
+	if (init(&sched) == ERROR)
+		exit(ERROR);
+
+	/* switch to daemon mode if needed */
+	if (g_mode & DAEMON)
+		daemonize();
+
+	log_msg("[-] exiting\n");
+	log_deinit();
+
+	conf_erase(&g_conf);
 	return(NOERROR);
 }

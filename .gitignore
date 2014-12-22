@@ -51,3 +51,4 @@ Icon
 
 # Project specific
 /misc
+/src/include/config.h

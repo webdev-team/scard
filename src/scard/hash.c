@@ -1,4 +1,4 @@
-/* modified by Michel Depeige for use in iyell */
+/* modified by Michel Depeige for use in scard */
 /* Copyright 2006 David Crawshaw, released under the new BSD license.
  * Version 2, from http://www.zentus.com/c/hash.html */
 

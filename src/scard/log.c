@@ -36,7 +36,7 @@
 
 void	log_init()
 {
-	openlog("iyell", LOG_PID, LOG_USER);
+	openlog("scard", LOG_PID, LOG_USER);
 }
 
 /*

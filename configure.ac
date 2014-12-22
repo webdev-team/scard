@@ -56,6 +56,7 @@ dnl
 AC_HEADER_STDC
 AC_HEADER_TIME
 AC_HEADER_SYS_WAIT
+AC_CHECK_HEADERS([fcntl.h stdint.h stdlib.h string.h sys/time.h syslog.h unistd.h])
 
 dnl
 dnl fonctions check
@@ -67,6 +68,7 @@ AC_FUNC_REALLOC
 AC_FUNC_VPRINTF
 AC_FUNC_STAT
 AC_FUNC_STRFTIME
+AC_CHECK_FUNCS([strdup strerror])
 
 dnl
 dnl paths

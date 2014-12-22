@@ -1,9 +1,9 @@
 /*
  *  conf.c
- *  iyell
+ *  scard
  *
- *  Created by Michel DEPEIGE on 10/10/07.
- *  Copyright (c) 2007 Michel DEPEIGE.
+ *  Created by Michel Depeige on 22/12/2014.
+ *  Copyright (c) 2007 Michel Depeige.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

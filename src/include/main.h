@@ -25,6 +25,19 @@
 #ifndef __SCARD_H__
 #define __SCARD_H__
 
+/* global includes */
+#include "conf.h"
+
+/* from init.c */
+int     init();
+
+/* from log.c */
+void    log_from_libevent(int level, char *str);
+void    log_init(void);
+void    log_deinit(void);
+void    log_msg(char *msg, ...);
+void    log_err(char *msg, ...);
+
 /* global variables */
 extern unsigned int	g_mode;		/* runing mode */
 extern char		*g_file;	/* configuration file */
@@ -37,6 +50,7 @@ extern conf_t		g_conf;
 #define	STARTING	(1 << 3)
 #define SHUTDOWN	(1 << 4)
 #define DEBUG		(1 << 8)
+#define	SYSLOG		(1 << 10)
 
 /* errors code */
 #define	NOERROR		0

@@ -1,5 +1,11 @@
 bin_PROGRAMS = scard
 
-scard_SOURCES =		main.c
+scard_SOURCES =		conf.c \
+			hash.c \
+			hash+.c \
+			init.c \
+			log.c \
+			main.c \
+			tools.c
 
 scard_CPPFLAGS = -D_XOPEN_SOURCE=600
