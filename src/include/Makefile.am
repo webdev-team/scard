@@ -1,4 +1,6 @@
-EXTRA_DIST =	hash.h \
+EXTRA_DIST =	eca.h \
+		env.h \
+		hash.h \
 		main.h \
 		posix+bsd.h \
 		tools.h

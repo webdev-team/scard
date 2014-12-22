@@ -38,6 +38,7 @@
 #include <event.h>
 #include "main.h"
 #include "conf.h"
+#include "eca.h"
 
 #if !defined(LIBEVENT_VERSION_NUMBER) || LIBEVENT_VERSION_NUMBER < 0x02001300
 #error "This version of Libevent is not supported; Get 2.0.19-stable or later."
@@ -63,6 +64,9 @@ int	init(struct event_base **bot)
 {
 	char	**tmp = NULL;
 
+	conf_init(&g_conf);
+	conf_read(&g_conf, g_file);
+
 	/* check for basic stuff */
 	check_id();
 
@@ -75,6 +79,12 @@ int	init(struct event_base **bot)
 	if (g_mode & VERBOSE) {
 		printf("[i] using libevent %s, mechanism: %s\n",
 			event_get_version(), event_get_method());
+	}
+
+	/* init ecasound */
+	if (eca_init() == ERROR) {
+		fprintf(stderr, "[i] cannot init libecasound, exiting\n");
+		return ERROR;
 	}
 
 	log_msg("[i] scard version %s started.\n", VERSION);

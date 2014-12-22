@@ -151,6 +151,27 @@ AC_CHECK_HEADER(event.h,
 )
 
 dnl
+dnl libecasoundc
+dnl
+
+AC_ARG_WITH(libecasoundc,
+	[  --with-libecasoundc=PATH    Use libecasoundc in PATH],
+	[
+		if test -d "$withval"; then
+			CPPFLAGS="${CPPFLAGS} -I$withval/include"
+			LDFLAGS="${LDFLAGS} -L$withval/lib"
+		fi
+	]
+)
+
+AC_CHECK_HEADER(libecasoundc/ecasoundc.h,
+	AC_CHECK_LIB(ecasoundc, eci_init, ,
+		AC_MSG_ERROR([*** libecasoundc not found - cannot continue ***])
+	),
+	AC_MSG_ERROR([*** libecasoundc not found - cannot continue ***])
+)
+
+dnl
 dnl Set PACKAGE_SYSCONF_DIR in config.h.
 dnl
 
