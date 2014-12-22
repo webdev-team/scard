@@ -25,7 +25,10 @@
 #ifndef __SCARDENV_H__
 #define __SCARDENV_H__
 
+/* defines */
+#define ECASOUND "ECASOUND"
+
 /* prototypes */
-int	env_check_ecasound();
+void	env_check_ecasound();
 
 #endif

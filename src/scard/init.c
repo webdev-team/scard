@@ -39,6 +39,7 @@
 #include "main.h"
 #include "conf.h"
 #include "eca.h"
+#include "env.h"
 
 #if !defined(LIBEVENT_VERSION_NUMBER) || LIBEVENT_VERSION_NUMBER < 0x02001300
 #error "This version of Libevent is not supported; Get 2.0.19-stable or later."
@@ -69,6 +70,7 @@ int	init(struct event_base **bot)
 
 	/* check for basic stuff */
 	check_id();
+	env_check_ecasound();
 
 	/* init libevents */
 	*bot = event_init();
