@@ -50,11 +50,44 @@ void		check_id(void);
 int		init(struct event_base **sched);
 static void	init_flags();
 
-/* functions */
+/* check if we are runing as root */
 void	check_id()
 {
 	if (getuid() == 0 || getgid() == 0)
 		fprintf(stderr, "[i] warning: running as root !\n");
+}
+
+/*
+ * check if sources specified in the configuration file are somewhat coherent
+ * this means something like name = device, format
+ */
+
+int	check_sources(hash_t *section)
+{
+	struct record_s	*recs;	
+	unsigned int   	c, i, j;
+
+	if (! section)
+		return ERROR;
+
+	recs = section->records;
+	for (i = 0, c = 0; c < section->records_count; i++) {
+		if (recs[i].hash != 0 && recs[i].key) {
+			c++;
+			if (g_mode & DEBUG)
+				log_msg("[i] source found: %s\n", recs[i].key);
+			if (hash_text_count_data(section, (char *)recs[i].key) != 2) {
+				log_err("[i] incorrect source setup for %s\n",
+					recs[i].key);
+				return ERROR;
+			}
+		}
+	}
+
+	if (g_mode & VERBOSE)
+		log_msg("[i] %i source(s) registered\n", c);
+
+	return NOERROR;
 }
 
 /*
@@ -72,17 +105,9 @@ int	init(struct event_base **sched)
 	/* check for basic stuff */
 	check_id();
 	env_check_ecasound();
-
-	tmp = hash_get(g_conf.global, "source");
-	if (tmp == NULL || tmp[0] == NULL) {
-		fprintf(stderr, "[i] no source defined, exiting\n");
+	if (check_sources(g_conf.record) == ERROR) {
+		fprintf(stderr, "[i] source configuration error, exiting\n");
 		return ERROR;
-	}
-
-	int i = 0;
-	while (tmp[i] != NULL) {
-		log_msg("[i] input %s\n", tmp[i]);
-		i++;
 	}
 
 	/* init libevents */

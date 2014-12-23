@@ -322,7 +322,7 @@ void	conf_ini_check_parameter(char *str, hash_t *mem, int line)
 	/* save , between "" */
 	for (i = 0, skip = 0; str[i] != '\0' ; i++) {
 		if (str[i] == '"')
-			skip = (skip++ % 2);
+			skip = (++skip % 2);
 		if (skip && (str[i] == ','))
 			str[i] = ';';
 	}
