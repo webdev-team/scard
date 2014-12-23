@@ -48,6 +48,8 @@
 /* structures */
 typedef struct conf_s {
 	hash_t	*global;
+	hash_t	*record;
+	hash_t	*http;
 }               conf_t;
 
 /* hash structures */

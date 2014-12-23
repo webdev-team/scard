@@ -41,7 +41,8 @@
 #define	SUB_INITIAL_CAPACITY	4
 #define	SEC_NONE	0
 #define SEC_GLOBAL	1
-#define SEC_HTTP	2
+#define SEC_RECORD	2
+#define SEC_HTTP	3
 
 /* prototypes */
 char	*conf_search(void);
@@ -59,6 +60,8 @@ int	conf_ini_save_section(hash_t *mem, FILE *out);
 void	conf_erase(conf_t *conf)
 {
 	hash_text_erase(conf->global);
+	hash_text_erase(conf->record);
+	hash_text_erase(conf->http);
 }
 
 /*
@@ -79,6 +82,8 @@ int	conf_reinit(conf_t *conf)
 void	conf_dump(conf_t *conf)
 {
 	conf_dump_section(conf->global);
+	conf_dump_section(conf->record);
+	conf_dump_section(conf->http);
 }
 
 void	conf_dump_section(hash_t *mem)
@@ -120,6 +125,16 @@ int	conf_init(conf_t *conf)
 	if (hash == NULL)
 		return -1;
 	conf->global = hash;
+	conf->record = NULL;
+	hash = hash_new(MAIN_INITIAL_CAPACITY);
+	if (hash == NULL)
+		return -1;
+	conf->record = hash;
+	conf->http = NULL;
+	hash = hash_new(MAIN_INITIAL_CAPACITY);
+	if (hash == NULL)
+		return -1;
+	conf->http = hash;
 
 	return 0;
 }
@@ -247,6 +262,26 @@ int	conf_ini_read(FILE *f, conf_t *conf)
 				free(dup);
 				break;
 			}
+			case SEC_RECORD: {
+				dup = strdup(tmp);
+				if (dup == NULL) {
+					log_err("[c] strdup() error: %s\n", strerror(errno));
+					break;
+				}
+				conf_ini_check_parameter(dup, conf->record, line);
+				free(dup);
+				break;
+			}
+			case SEC_HTTP: {
+				dup = strdup(tmp);
+				if (dup == NULL) {
+					log_err("[c] strdup() error: %s\n", strerror(errno));
+					break;
+				}
+				conf_ini_check_parameter(dup, conf->http, line);
+				free(dup);
+				break;
+			}
 			default: {
 				log_msg("[c] line %i outside known section: %s", line, tmp);
 			}
@@ -342,7 +377,7 @@ void	conf_ini_check_parameter(char *str, hash_t *mem, int line)
 
 short	conf_ini_check_section(char *str, int line)
 {
-	char	*sections[] = { NULL, "global", "http"};
+	char	*sections[] = { NULL, "global", "record", "http"};
 	short	i;
 	char	*end;
 
@@ -350,7 +385,7 @@ short	conf_ini_check_section(char *str, int line)
 	end = strchr(str, ']');
 	*end = '\0';
 	assert(end != NULL);
-	for (i = 1; i < 3; i++) {
+	for (i = 1; i < 4; i++) {
 		if (strcmp(str, sections[i]) == 0) {
 			return i;
 		}
@@ -376,6 +411,12 @@ int	conf_ini_save(conf_t *mem, char *file)
 
 	fwrite((void *)"[global]\n", 9, 1, out);
 	conf_ini_save_section(mem->global, out);
+	fwrite((void *)"\n", 1, 1, out);
+	fwrite((void *)"[record]\n", 9, 1, out);
+	conf_ini_save_section(mem->record, out);
+	fwrite((void *)"\n", 1, 1, out);
+	fwrite((void *)"[http]\n", 9, 1, out);
+	conf_ini_save_section(mem->http, out);
 	fwrite((void *)"\n", 1, 1, out);
 	fclose(out);
 
