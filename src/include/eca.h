@@ -26,7 +26,8 @@
 #define __ECA_H__
 
 /* prototypes */
-int	eca_init();
+int	eca_init(void);
+void	eca_cleanup(void);
 
 /* variables */
 extern char	*g_ecasound;

@@ -31,8 +31,10 @@
 #include <event.h>
 #ifdef HAVE_CONFIG_H
 #include <stdlib.h>
+#include <event.h>
 #include "config.h"
 #include "conf.h"
+#include "eca.h"
 #include "main.h"
 #include "tools.h"
 #endif
@@ -40,22 +42,39 @@
 /* prototypes */
 conf_t	g_conf;
 
+void	toto(evutil_socket_t fd, short what, void *arg)
+{
+	printf("pouet\n");
+}
+
 int	main(int argc, char *argv[])
 {
-	struct event_base	*sched;
+	struct event_base	*base;
+	struct event		*ev;
+	struct timeval		timeout;
 
 	/* init the program, check opt, init some stuff... */
 	checkopt(argc, argv);
 
-	if (init(&sched) == ERROR)
+	if (init(&base) == ERROR)
 		exit(ERROR);
 
 	/* switch to daemon mode if needed */
 	if (g_mode & DAEMON)
 		daemonize();
 
+	/* event loop */
+	ev = evtimer_new(base, toto, ev);
+        timeout.tv_sec = 10;
+        timeout.tv_usec = 0;
+
+	ev = event_new(base, -1, EV_PERSIST, toto, NULL);	
+	event_add(ev, &timeout);
+	event_base_dispatch(base);
+
+	eca_cleanup();
 	log_msg("[-] exiting\n");
-	log_deinit();
+	log_cleanup();
 
 	conf_erase(&g_conf);
 	return(NOERROR);

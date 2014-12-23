@@ -25,6 +25,7 @@
 #ifdef	HAVE_CONFIG_H
 #include	"config.h"
 #endif
+#include 	<assert.h>
 #include	<fcntl.h>
 #include	<stdio.h>
 #include	<stdint.h>
@@ -40,6 +41,7 @@
 #define	SUB_INITIAL_CAPACITY	4
 #define	SEC_NONE	0
 #define SEC_GLOBAL	1
+#define SEC_HTTP	2
 
 /* prototypes */
 char	*conf_search(void);
@@ -221,6 +223,7 @@ int	conf_ini_read(FILE *f, conf_t *conf)
 	char		tmp[BUFF_SIZE];
 	short		section = SEC_NONE;
 	unsigned int	line = 0;
+	char		*dup;
 
 	while (fgets(tmp, BUFF_SIZE, f) != NULL) {
 		/* skip comments */
@@ -235,7 +238,13 @@ int	conf_ini_read(FILE *f, conf_t *conf)
 
 		switch (section) {
 			case SEC_GLOBAL: {
-				conf_ini_check_parameter(tmp, conf->global, line);
+				dup = strdup(tmp);
+				if (dup == NULL) {
+					log_err("[c] strdup() error: %s\n", strerror(errno));
+					break;
+				}
+				conf_ini_check_parameter(dup, conf->global, line);
+				free(dup);
 				break;
 			}
 			default: {
@@ -258,11 +267,11 @@ next:
 void	conf_ini_check_parameter(char *str, hash_t *mem, int line)
 {
 	char		*data[MAX_TOKENS];
-	char		*key, *token;
+	char		*key, *pos, *token;
 #ifdef HAVE_STRTOK_R
 	char		*saveptr;
 #endif
-	unsigned short	i;
+	unsigned short	i, skip;
 	size_t		len;
 
 	/* remove comments */
@@ -273,6 +282,14 @@ void	conf_ini_check_parameter(char *str, hash_t *mem, int line)
 	if (str == NULL) {
 		log_err("[c] invalid parameter declaration line %i: %s", line, key);
 		return ;
+	}
+
+	/* save , between "" */
+	for (i = 0, skip = 0; str[i] != '\0' ; i++) {
+		if (str[i] == '"')
+			skip = (skip++ % 2);
+		if (skip && (str[i] == ','))
+			str[i] = ';';
 	}
 
 	/* split data */
@@ -306,6 +323,14 @@ void	conf_ini_check_parameter(char *str, hash_t *mem, int line)
 
 	/* insert data */
 	for (i = 0; data[i] != NULL; i++) {
+		/* restore ',' */
+		while (1)  {
+			pos = strchr(data[i], ';');
+			if (pos == '\0')
+				break;
+			*pos = ',';
+		}
+
 		hash_text_insert(mem, key, data[i]);
 	}
 }
@@ -317,20 +342,22 @@ void	conf_ini_check_parameter(char *str, hash_t *mem, int line)
 
 short	conf_ini_check_section(char *str, int line)
 {
-	char	*sections[] = { NULL, "global", "cmd", "hooks", "forward", "transmit"};
+	char	*sections[] = { NULL, "global", "http"};
 	short	i;
-	char	*name;
+	char	*end;
 
 	str++;
-	name = strsep(&str, "]");
-	for (i = 1; i < 6; i++) {
-		if (strcmp(name, sections[i]) == 0) {
+	end = strchr(str, ']');
+	*end = '\0';
+	assert(end != NULL);
+	for (i = 1; i < 3; i++) {
+		if (strcmp(str, sections[i]) == 0) {
 			return i;
 		}
 	}
 
 	/* if we are here, then there is a syntax error */
-	log_err("[c] invalid section declaration line %i: %s\n", line, name);
+	log_err("[c] invalid section declaration line %i: %s\n", line, str);
 	return SEC_NONE;
 }
 

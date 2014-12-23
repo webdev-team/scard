@@ -34,9 +34,12 @@ int     init();
 /* from log.c */
 void    log_from_libevent(int level, char *str);
 void    log_init(void);
-void    log_deinit(void);
+void    log_cleanup(void);
 void    log_msg(char *msg, ...);
 void    log_err(char *msg, ...);
+
+/* misc .c */
+void    sig_set_handlers(void);
 
 /* global variables */
 extern unsigned int	g_mode;		/* runing mode */

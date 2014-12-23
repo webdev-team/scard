@@ -47,7 +47,7 @@
 
 /* prototypes */
 void		check_id(void);
-int		init(struct event_base **bot);
+int		init(struct event_base **sched);
 static void	init_flags();
 
 /* functions */
@@ -61,20 +61,33 @@ void	check_id()
  * main init
  */
 
-int	init(struct event_base **bot)
+int	init(struct event_base **sched)
 {
 	char	**tmp = NULL;
 
 	conf_init(&g_conf);
-	conf_read(&g_conf, g_file);
+	if (conf_read(&g_conf, g_file) == -1)
+		return ERROR;
 
 	/* check for basic stuff */
 	check_id();
 	env_check_ecasound();
 
+	tmp = hash_get(g_conf.global, "source");
+	if (tmp == NULL || tmp[0] == NULL) {
+		fprintf(stderr, "[i] no source defined, exiting\n");
+		return ERROR;
+	}
+
+	int i = 0;
+	while (tmp[i] != NULL) {
+		log_msg("[i] input %s\n", tmp[i]);
+		i++;
+	}
+
 	/* init libevents */
-	*bot = event_init();
-	if (*bot == NULL) {
+	*sched = event_init();
+	if (*sched == NULL) {
 		fprintf(stderr, "[i] cannot init libevent, exiting\n");
 		return ERROR;
 	}
@@ -89,6 +102,14 @@ int	init(struct event_base **bot)
 		return ERROR;
 	}
 
+        /* set handlers */
+        sig_set_handlers();
+
+	/* misc init */
+	init_flags();
+
+	g_mode |= STARTING;
+
 	log_msg("[i] scard version %s started.\n", VERSION);
 	return NOERROR;
 }
@@ -96,5 +117,7 @@ int	init(struct event_base **bot)
 /* set global glags */
 static void	init_flags()
 {
-
+        /* syslog logging flag */
+        if (hash_text_is_true(g_conf.global, "syslog"))
+                g_mode |= SYSLOG;
 }

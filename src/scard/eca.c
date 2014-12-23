@@ -55,3 +55,11 @@ int	eca_init() {
 
 	return NOERROR;
 }
+
+/*
+ * cleanup ecasound stuff
+ */
+
+void	eca_cleanup() {
+	eci_cleanup();
+}

@@ -8,6 +8,7 @@ scard_SOURCES =		conf.c \
 			init.c \
 			log.c \
 			main.c \
+			signal.c \
 			tools.c
 
 scard_CPPFLAGS = -D_XOPEN_SOURCE=600

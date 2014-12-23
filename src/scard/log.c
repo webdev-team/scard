@@ -43,7 +43,7 @@ void	log_init()
  * cleanup everything before exiting
  */
 
-void	log_deinit()
+void	log_cleanup()
 {
 	closelog();
 }
