@@ -28,9 +28,12 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -45,10 +48,15 @@
 #error "This version of Libevent is not supported; Get 2.0.19-stable or later."
 #endif
 
+/* globals */
+char		**g_sources;
+
 /* prototypes */
 void		check_id(void);
 int		init(struct event_base **sched);
 static void	init_flags();
+int		register_sources(hash_t *section, unsigned int count);
+void		unregister_sources(void);
 
 /* check if we are runing as root */
 void	check_id()
@@ -65,7 +73,7 @@ void	check_id()
 int	check_sources(hash_t *section)
 {
 	struct record_s	*recs;	
-	unsigned int   	c, i, j;
+	unsigned int   	c, i;
 
 	if (! section)
 		return ERROR;
@@ -84,9 +92,7 @@ int	check_sources(hash_t *section)
 		}
 	}
 
-	if (g_mode & VERBOSE)
-		log_msg("[i] %i source(s) registered\n", c);
-
+	register_sources(section, c);
 	return NOERROR;
 }
 
@@ -104,6 +110,7 @@ int	init(struct event_base **sched)
 
 	/* check for basic stuff */
 	check_id();
+	log_init();
 	env_check_ecasound();
 	if (check_sources(g_conf.record) == ERROR) {
 		fprintf(stderr, "[i] source configuration error, exiting\n");
@@ -145,4 +152,39 @@ static void	init_flags()
         /* syslog logging flag */
         if (hash_text_is_true(g_conf.global, "syslog"))
                 g_mode |= SYSLOG;
+}
+
+/*
+ * This function register sources on global array
+ */
+
+int	register_sources(hash_t *section, unsigned int count)
+{
+	struct record_s	*recs;	
+	unsigned int   	c, i;
+
+	assert(section != NULL);
+	assert(count > 0);
+
+	g_sources = malloc((count + 1) * sizeof(char *));
+	if (g_sources == NULL)
+		log_err("[i] malloc() error: %s\n", strerror(errno));
+
+	recs = section->records;
+	for (i = 0, c = 0; c < section->records_count; i++) {
+		if (recs[i].hash != 0 && recs[i].key) {
+			g_sources[c] = (char *)recs[i].key;
+			c++;
+		}
+	}
+	g_sources[c] = NULL;
+
+	if (g_mode & VERBOSE)
+		log_msg("[i] %i source(s) registered\n", c);
+	return NOERROR;
+}
+
+void	unregister_sources()
+{
+	free(g_sources);
 }

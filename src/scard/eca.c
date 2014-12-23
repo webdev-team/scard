@@ -25,7 +25,6 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
-#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -35,8 +34,8 @@
 #include "main.h"
 #include "eca.h"
 
-/* globals */
-char 	*g_ecasound;
+/* prototypes */
+int	eca_create_chains(void);
 
 /*
  * init ecasound and check if ecasound is ready
@@ -53,6 +52,7 @@ int	eca_init() {
 	if (status == 0)
 		return ERROR;
 
+	eca_create_chains();
 	return NOERROR;
 }
 
@@ -64,3 +64,18 @@ void	eca_cleanup() {
 	eci_cleanup();
 }
 
+/*
+ * create chains in ecasound
+ * use source name as chain name
+ */
+
+int	eca_create_chains() {
+	unsigned int	i = 0;
+
+	while (g_sources[i] != NULL) {
+		char tmp[strlen(g_sources[i] + 7)];
+		sprintf(tmp, "c-add %s", g_sources[i]);
+		printf("DEBUG: %s\n", tmp);
+		i++;
+	}
+}

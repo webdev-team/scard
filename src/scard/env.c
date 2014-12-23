@@ -36,9 +36,6 @@
 #include "main.h"
 #include "env.h"
 
-/* globals */
-char 	*g_ecasound;
-
 /*
  * check for ECASOUND environement variable.
  * set it to 'ecasound' if not set and nothing in configuration
@@ -54,7 +51,7 @@ void	env_check_ecasound() {
 	value = getenv(ECASOUND);
 	if (value != NULL) {
 		if (g_mode & DEBUG)
-			log_msg("[v] ECASOUND already set to %s, leaving as it\n", value);
+			log_msg("[+] ECASOUND already set to %s, leaving as it\n", value);
 
 		return ;
 	}
@@ -63,16 +60,16 @@ void	env_check_ecasound() {
 	value = hash_text_get_first(g_conf.global, "ecasound");
 	if (value == NULL) {
 		if (g_mode & DEBUG)
-			log_msg("[v] ECASOUND env not set, setting ECASOUND=ecasound\n");		
+			log_msg("[+] ECASOUND env not set, setting ECASOUND=ecasound\n");		
 		
 		if (putenv("ECASOUND=ecasound") == -1)
-			log_err("[v] cannot set ECASOUND: %s\n", strerror(errno));
+			log_err("[-] cannot set ECASOUND: %s\n", strerror(errno));
 
 		return ;
         }
 
 	if (g_mode & DEBUG)
-		log_msg("[v] ECASOUND env not set, setting ECASOUND=%s\n", value);	
+		log_msg("[+] ECASOUND env not set, setting ECASOUND=%s\n", value);	
 	if (setenv(ECASOUND, value, 1) == -1)
-		log_err("[i] setenv() error: %s\n", strerror(errno));	
+		log_err("[-] setenv() error: %s\n", strerror(errno));	
 }

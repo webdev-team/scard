@@ -45,6 +45,7 @@ void    sig_set_handlers(void);
 extern unsigned int	g_mode;		/* runing mode */
 extern char		*g_file;	/* configuration file */
 extern conf_t		g_conf;
+extern char		**g_sources;	/* sources list */
 
 /* gmode defines */
 #define	DAEMON		(1 << 0)
