@@ -39,13 +39,11 @@
 #include "tools.h"
 #endif
 
-/* prototypes */
+/* globals */
 conf_t	g_conf;
 
-void	toto(evutil_socket_t fd, short what, void *arg)
-{
-	printf("pouet\n");
-}
+/* prototypes */
+void	watchdog(evutil_socket_t fd, short what, void *arg);
 
 int	main(int argc, char *argv[])
 {
@@ -64,11 +62,11 @@ int	main(int argc, char *argv[])
 		daemonize();
 
 	/* event loop */
-	ev = evtimer_new(base, toto, ev);
+	ev = evtimer_new(base, watchdog, ev);
         timeout.tv_sec = 10;
         timeout.tv_usec = 0;
 
-	ev = event_new(base, -1, EV_PERSIST, toto, NULL);	
+	ev = event_new(base, -1, EV_PERSIST, watchdog, NULL);	
 	event_add(ev, &timeout);
 	event_base_dispatch(base);
 
@@ -79,3 +77,9 @@ int	main(int argc, char *argv[])
 	conf_erase(&g_conf);
 	return(NOERROR);
 }
+
+void	watchdog(evutil_socket_t fd, short what, void *arg)
+{
+	eca_check_status();
+}
+

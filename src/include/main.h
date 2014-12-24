@@ -38,6 +38,12 @@ void    log_cleanup(void);
 void    log_msg(char *msg, ...);
 void    log_err(char *msg, ...);
 
+/* log macros */
+#define log_eci_command(cmd)\
+	if (g_mode & DEBUG) \
+		log_msg(">>> %s\n", cmd);\
+	eci_command(cmd);
+
 /* misc .c */
 void    sig_set_handlers(void);
 

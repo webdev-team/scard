@@ -358,6 +358,15 @@ void	conf_ini_check_parameter(char *str, hash_t *mem, int line)
 
 	/* insert data */
 	for (i = 0; data[i] != NULL; i++) {
+		/* remove leading and trailing '"' */
+		len = strlen(data[i]);
+		if (len > 2) {
+			if (data[i][len - 1] == '"')
+				data[i][len - 1] = '\0';
+			if (data[i][0] == '"')
+				data[i]++;
+		}
+
 		/* restore ',' */
 		while (1)  {
 			pos = strchr(data[i], ';');

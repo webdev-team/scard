@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -63,6 +64,53 @@ void	check_id()
 {
 	if (getuid() == 0 || getgid() == 0)
 		fprintf(stderr, "[i] warning: running as root !\n");
+}
+
+/*
+ * check recordpath presence and test if it's useable
+ */
+
+int 	check_recordpath()
+{
+	char		*path = NULL;
+	struct stat	st;
+	int		error;
+	FILE		*f;
+
+	path = hash_text_get_first(g_conf.global, "recordpath");
+	if (path == NULL)
+		return ERROR;
+
+	/* check if it's a directory */
+	error = stat(path, &st);
+	if (error) {
+		log_err("[i] stat() error: %s\n", strerror(errno));
+		return ERROR;
+	}
+
+	if(! ((st.st_mode & S_IFDIR) != 0)) {
+		log_err("[i] %s doesn't look like a directory\n");
+		return ERROR;
+	}
+
+	/* 
+	 * check if it's writeable
+	 * test filename is path + / + .scard + XXXXXX
+	 */
+	char	test[strlen(path) + 1 + 6 + 6 + 1];
+	sprintf(test, "%s/.scardXXXXXX", path);
+	mktemp(test);
+
+	f = fopen(test, "w");
+	if (f == NULL) {
+		log_err("[i] fopen() error: %s\n", strerror(errno));
+		return ERROR;
+	}
+
+	fclose(f);
+	unlink(f);
+
+	return NOERROR;
 }
 
 /*
@@ -116,6 +164,8 @@ int	init(struct event_base **sched)
 		fprintf(stderr, "[i] source configuration error, exiting\n");
 		return ERROR;
 	}
+
+	check_recordpath();
 
 	/* init libevents */
 	*sched = event_init();

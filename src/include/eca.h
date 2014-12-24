@@ -28,7 +28,7 @@
 /* prototypes */
 int	eca_init(void);
 void	eca_cleanup(void);
-int	eca_cjeck_sources(void);
+int	eca_check_status(void);
 
 /* variables */
 extern char	*g_ecasound;

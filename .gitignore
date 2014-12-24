@@ -52,3 +52,10 @@ Icon
 # Project specific
 /misc
 /src/include/config.h
+
+/Makefile
+/etc/Makefile
+/src/Makefile
+/src/include/Makefile
+/src/scard/Makefile
+/src/scard/scard
