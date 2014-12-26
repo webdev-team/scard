@@ -108,7 +108,7 @@ int 	check_recordpath()
 	}
 
 	fclose(f);
-	unlink(f);
+	unlink(test);
 
 	return NOERROR;
 }

@@ -50,12 +50,14 @@ Icon
 *~
 
 # Project specific
-/misc
-/src/include/config.h
-
+/autoscan.log
+/config.log
+/config.status
+/configure.scan
 /Makefile
 /etc/Makefile
 /src/Makefile
+/src/include/config.h
 /src/include/Makefile
 /src/scard/Makefile
 /src/scard/scard
