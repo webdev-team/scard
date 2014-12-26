@@ -27,22 +27,30 @@
 #endif /* HAVE_CONFIG_H */
 #include <assert.h>
 #include <errno.h>
+#include <event.h>
 #include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
 #include <libecasoundc/ecasoundc.h>
 #include "main.h"
 #include "eca.h"
 
+/* defines */
+#define ROTATE_STEP 3600
+
+/* globals */
+struct event    *ev_rotate;
+
 /* prototypes */
+int		eca_check_output_path(char *path);
 int		eca_create_chains(void);
 static void	eca_build_command(char *cmd, char *arg);
-int		eca_set_destination(char *source, char *dest);
 void		eca_set_format(void);
 
 /* 
@@ -149,6 +157,9 @@ char	*eca_build_output_path(char *source) {
 		return NULL;
 
 	free(extension);
+
+	/* check if parent dires are present */
+	eca_check_output_path(path);
 	return(path);
 }
 
@@ -245,6 +256,7 @@ int	eca_init() {
 	if (status == 0)
 		return ERROR;
 
+	ev_rotate = NULL;
 	eca_create_chains();
 	return NOERROR;
 }
@@ -255,6 +267,8 @@ int	eca_init() {
 
 void	eca_cleanup() {
 	eci_cleanup();
+	if (ev_rotate != NULL)
+		event_free(ev_rotate);
 }
 
 /*
@@ -275,27 +289,106 @@ int	eca_create_chains() {
 		if ((path = eca_build_output_path(g_sources[i])) == NULL) 
 			return ERROR;
 
-		eca_set_destination(g_sources[i], path);
+		eca_build_command("c-select", g_sources[i]);
+		eca_build_command("ao-add", path);
 		free(path);
 		i++;
 	}
 
+	log_eci_command("cs-connect");
+	log_eci_command("start");
 	return NOERROR;
 }
 
 int	eca_check_status() {
+	double	position;
+
+	eci_command("cs-get-position");
+	position = eci_last_float();
 	eci_command("engine-status");
 	if (g_mode & DEBUG)
-		log_msg("[e] ecasound engine status: %s\n", eci_last_string());
+		log_msg("[e] engine status: %s, position: %.3f\n", \
+			eci_last_string(), position);
 
 	return NOERROR;
 }
 
-int	eca_set_destination(char *source, char *dest)
+/*
+ * rotate files
+ * this is called every hour
+ * switch audio to the new file and delele all previous references in ecasound
+ */
+
+void	eca_rotate_files(evutil_socket_t fd, short what, void *arg) {
+	unsigned int	i = 0;
+	char		*path;
+	const char	*tmp;
+
+        (void)fd;
+        (void)what;
+
+	while (g_sources[i] != NULL) {
+		/* find current output */
+		eca_build_command("c-select", g_sources[i]);
+		log_eci_command("ao-selected");
+		tmp = (char *)eci_last_string();
+		assert(tmp != NULL);
+
+		/* save old audio output */
+		char old[strlen(tmp) + 1];
+		stpcpy(old, tmp);
+
+		if ((path = eca_build_output_path(g_sources[i])) == NULL) 
+			return ;
+
+		/* got called too soon */
+		if (strcmp(old, path) == 0) {
+			log_err("[e] rotate_files() called too early !\n");
+			free(path);
+			return ;
+		}
+
+		eca_build_command("ao-add", path);
+		eca_build_command("ao-select", old);
+		log_eci_command("ao-remove");
+		free(path);
+		i++;
+	}
+
+	/* schedule next rotate */
+	eca_schedule_rotate(arg);
+}
+
+/*
+ * aproximate the number of seconds to wait before next rotation
+ */
+
+void	eca_schedule_rotate(struct event_base *base)
 {
-	eca_build_command("c-select", source);
-	eca_check_output_path(dest);
-	eca_build_command("ao-add", dest);
+	time_t		now, then;
+	struct timeval	timeout;
+
+        now = time(NULL);
+        if (now == -1) {
+               log_err("[e] time() error: %s\n", strerror(errno));
+               return ; 
+        }
+
+	then = now - (now % ROTATE_STEP) + ROTATE_STEP;
+
+	if (g_mode & DEBUG)
+		log_msg("[e] %i second(s) before next file rotation\n", \
+			(then - now));
+
+	/* build next event */
+	timeout.tv_sec = then - now;
+	timeout.tv_usec = 100;
+
+	if (ev_rotate == NULL) {
+		ev_rotate = event_new(base, -1, EV_TIMEOUT, eca_rotate_files, base);
+	}
+	if (event_add(ev_rotate, &timeout) == -1)
+		log_err("[e] event_add() error: %s\n", strerror(errno));
 }
 
 /*

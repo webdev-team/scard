@@ -61,13 +61,17 @@ int	main(int argc, char *argv[])
 	if (g_mode & DAEMON)
 		daemonize();
 
-	/* event loop */
-	ev = evtimer_new(base, watchdog, ev);
+	/* watchdog */
         timeout.tv_sec = 10;
         timeout.tv_usec = 0;
 
 	ev = event_new(base, -1, EV_PERSIST, watchdog, NULL);	
 	event_add(ev, &timeout);
+
+	/* schedule file rotate */
+	eca_schedule_rotate(base);
+
+	/* event loop */
 	event_base_dispatch(base);
 
 	eca_cleanup();
@@ -80,6 +84,10 @@ int	main(int argc, char *argv[])
 
 void	watchdog(evutil_socket_t fd, short what, void *arg)
 {
+	(void)fd;
+	(void)what;
+	(void)arg;
+
 	eca_check_status();
 }
 

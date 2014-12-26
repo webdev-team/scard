@@ -29,6 +29,7 @@
 int	eca_init(void);
 void	eca_cleanup(void);
 int	eca_check_status(void);
+void	eca_schedule_rotate(struct event_base *base);
 
 /* variables */
 extern char	*g_ecasound;
