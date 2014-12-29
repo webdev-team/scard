@@ -99,6 +99,11 @@ static void	http_dump_cb(struct evhttp_request *req, void *arg)
 	evhttp_send_reply(req, 200, "OK", NULL);
 }
 
+static void	http_favicon_cb(struct evhttp_request *req, void *arg)
+{
+
+}
+
 /*
  * init libevent http engine
  */
@@ -125,6 +130,9 @@ int	http_init(struct event_base *base)
 	/* register /dump URI on debug mode only */
 	if (g_mode & DEBUG)
 		evhttp_set_cb(ev_httpd, "/dump", http_dump_cb, NULL);
+
+	/* register used URIs */
+	evhttp_set_cb(ev_httpd, "/favicon.ico", http_favicon_cb, NULL);
 
 	return NOERROR;
 }
