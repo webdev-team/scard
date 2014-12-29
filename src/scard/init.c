@@ -44,6 +44,7 @@
 #include "conf.h"
 #include "eca.h"
 #include "env.h"
+#include "http.h"
 
 #if !defined(LIBEVENT_VERSION_NUMBER) || LIBEVENT_VERSION_NUMBER < 0x02001300
 #error "This version of Libevent is not supported; Get 2.0.19-stable or later."
@@ -54,7 +55,7 @@ sources_t	*g_sources;
 
 /* prototypes */
 void		check_id(void);
-int		init(struct event_base **sched);
+int		init(struct event_base **base);
 static void	init_flags();
 int		register_sources(hash_t *section, unsigned int count);
 void		unregister_sources(void);
@@ -148,10 +149,8 @@ int	check_sources(hash_t *section)
  * main init
  */
 
-int	init(struct event_base **sched)
+int	init(struct event_base **base)
 {
-	char	**tmp = NULL;
-
 	conf_init(&g_conf);
 	if (conf_read(&g_conf, g_file) == -1)
 		return ERROR;
@@ -168,8 +167,8 @@ int	init(struct event_base **sched)
 	check_recordpath();
 
 	/* init libevents */
-	*sched = event_init();
-	if (*sched == NULL) {
+	*base = event_init();
+	if (*base == NULL) {
 		fprintf(stderr, "[i] cannot init libevent, exiting\n");
 		return ERROR;
 	}
@@ -189,6 +188,8 @@ int	init(struct event_base **sched)
 
 	/* misc init */
 	init_flags();
+	if (http_init(*base) == ERROR)
+		log_err("[i] cannot init WebGUI\n");
 
 	g_mode |= STARTING;
 

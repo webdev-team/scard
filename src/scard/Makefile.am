@@ -5,6 +5,7 @@ scard_SOURCES =		conf.c \
 			env.c \
 			hash.c \
 			hash+.c \
+			http.c \
 			init.c \
 			log.c \
 			main.c \

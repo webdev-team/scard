@@ -77,6 +77,7 @@ int	main(int argc, char *argv[])
 	eca_cleanup();
 	log_msg("[-] exiting\n");
 	log_cleanup();
+	http_cleanup();
 
 	conf_erase(&g_conf);
 	return(NOERROR);

@@ -59,5 +59,6 @@ Icon
 /src/Makefile
 /src/include/config.h
 /src/include/Makefile
+/src/include/stamp-h1
 /src/scard/Makefile
 /src/scard/scard

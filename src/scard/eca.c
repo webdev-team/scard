@@ -22,6 +22,9 @@
  *
  */
 
+#define _GNU_SOURCE
+#define _BSD_SOURCE
+#define __BSD_VISIBLE 1
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
