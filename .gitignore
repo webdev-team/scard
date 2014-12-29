@@ -56,6 +56,8 @@ Icon
 /configure.scan
 /Makefile
 /etc/Makefile
+/share/Makefile
+/share/www/Makefile
 /src/Makefile
 /src/include/config.h
 /src/include/Makefile

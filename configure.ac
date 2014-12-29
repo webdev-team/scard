@@ -197,6 +197,8 @@ AC_SUBST([QUOTES])
 
 AC_OUTPUT([Makefile\
 	etc/Makefile\
+	share/Makefile\
+	share/www/Makefile\
 	src/include/Makefile\
 	src/scard/Makefile\
 	src/Makefile]
