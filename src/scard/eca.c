@@ -283,15 +283,15 @@ int	eca_create_chains() {
 	/* create chainsetup and set audio format */
 	eca_build_command("cs-add", "scard");
 	eca_set_format();
-	while (g_sources[i] != NULL) {
+	while (g_sources[i].name != NULL) {
 		/* add input */
-		eca_add_source(g_sources[i]);
-		if ((path = eca_build_output_path(g_sources[i])) == NULL) 
+		eca_add_source(g_sources[i].name);
+		if ((path = eca_build_output_path(g_sources[i].name)) == NULL) 
 			return ERROR;
 
-		eca_build_command("c-select", g_sources[i]);
+		eca_build_command("c-select", g_sources[i].name);
 		eca_build_command("ao-add", path);
-		free(path);
+		g_sources[i].file = path;
 		i++;
 	}
 
@@ -301,14 +301,21 @@ int	eca_create_chains() {
 }
 
 int	eca_check_status() {
-	double	position;
+	const char	*msg;
+	double		position;
 
 	eci_command("cs-get-position");
 	position = eci_last_float();
 	eci_command("engine-status");
+	msg = eci_last_string();
+	if (strcmp(eci_last_string(), "running") != 0) {
+		log_err("[e] engine not running! error %i: %s\n", \
+			eci_error(), eci_last_error());
+	}
+
 	if (g_mode & DEBUG)
 		log_msg("[e] engine status: %s, position: %.3f\n", \
-			eci_last_string(), position);
+			msg, position);
 
 	return NOERROR;
 }
@@ -321,24 +328,24 @@ int	eca_check_status() {
 
 void	eca_rotate_files(evutil_socket_t fd, short what, void *arg) {
 	unsigned int	i = 0;
-	char		*path;
-	const char	*tmp;
+	char		*old, *path;
 
         (void)fd;
         (void)what;
 
-	while (g_sources[i] != NULL) {
-		/* find current output */
-		eca_build_command("c-select", g_sources[i]);
-		log_eci_command("ao-selected");
-		tmp = (char *)eci_last_string();
-		assert(tmp != NULL);
+	/*
+	 * stop processing while rotating
+	 * it helps not stoping/starting engine a billion times if we are recording
+	 * many many things.
+	 */
 
-		/* save old audio output */
-		char old[strlen(tmp) + 1];
-		stpcpy(old, tmp);
+	log_eci_command("stop");
+	log_eci_command("cs-disconnect");
+	while (g_sources[i].name != NULL) {
+		eca_build_command("c-select", g_sources[i].name);
 
-		if ((path = eca_build_output_path(g_sources[i])) == NULL) 
+		old = g_sources[i].file;
+		if ((path = eca_build_output_path(g_sources[i].name)) == NULL) 
 			return ;
 
 		/* got called too soon */
@@ -349,11 +356,16 @@ void	eca_rotate_files(evutil_socket_t fd, short what, void *arg) {
 		}
 
 		eca_build_command("ao-add", path);
+		g_sources[i].file = path;
 		eca_build_command("ao-select", old);
 		log_eci_command("ao-remove");
-		free(path);
+		free(old);
 		i++;
 	}
+
+	log_eci_command("cs-select scard");
+	log_eci_command("cs-connect");
+	log_eci_command("start");
 
 	/* schedule next rotate */
 	eca_schedule_rotate(arg);

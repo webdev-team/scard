@@ -68,7 +68,7 @@ AC_FUNC_REALLOC
 AC_FUNC_VPRINTF
 AC_FUNC_STAT
 AC_FUNC_STRFTIME
-AC_CHECK_FUNCS([putenv setenv strchr strdup strerror])
+AC_CHECK_FUNCS([mkdir putenv setenv strchr strdup strerror])
 
 dnl
 dnl paths

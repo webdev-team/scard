@@ -50,7 +50,7 @@
 #endif
 
 /* globals */
-char		**g_sources;
+sources_t	*g_sources;
 
 /* prototypes */
 void		check_id(void);
@@ -216,18 +216,19 @@ int	register_sources(hash_t *section, unsigned int count)
 	assert(section != NULL);
 	assert(count > 0);
 
-	g_sources = malloc((count + 1) * sizeof(char *));
+	g_sources = malloc((count + 1) * sizeof(sources_t));
 	if (g_sources == NULL)
 		log_err("[i] malloc() error: %s\n", strerror(errno));
 
 	recs = section->records;
 	for (i = 0, c = 0; c < section->records_count; i++) {
 		if (recs[i].hash != 0 && recs[i].key) {
-			g_sources[c] = (char *)recs[i].key;
+			g_sources[c].name = (char *)recs[i].key;
 			c++;
 		}
 	}
-	g_sources[c] = NULL;
+	g_sources[c].name = NULL;
+	g_sources[c].file = NULL;
 
 	if (g_mode & VERBOSE)
 		log_msg("[i] %i source(s) registered\n", c);
@@ -236,5 +237,11 @@ int	register_sources(hash_t *section, unsigned int count)
 
 void	unregister_sources()
 {
+	int	i = 0;
+
+	while (g_sources[i].name != NULL) {
+		free(g_sources[i].file);
+	}
+
 	free(g_sources);
 }
