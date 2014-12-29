@@ -26,9 +26,11 @@
 #include "config.h"
 #endif /* HAVE_CONFIG_H */
 #include <assert.h>
-#include <getopt.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -45,6 +47,7 @@ struct	evhttp	*ev_httpd = NULL;
 
 /* prototypes */
 static void	http_dump_cb(struct evhttp_request *req, void *arg);
+static int	http_send_file(struct evhttp_request *req);
 
 void	http_cleanup()
 {
@@ -96,12 +99,18 @@ static void	http_dump_cb(struct evhttp_request *req, void *arg)
 		free(line);
 	}
 
-	evhttp_send_reply(req, 200, "OK", NULL);
+	evhttp_send_reply(req, HTTP_OK, "OK", NULL);
 }
 
 static void	http_favicon_cb(struct evhttp_request *req, void *arg)
 {
+	(void)arg;
 
+	evhttp_add_header(evhttp_request_get_output_headers(req), \
+			"Content-Type", "image/x-icon");
+
+	if (http_send_file(req) == ERROR)
+		evhttp_send_error(req, HTTP_INTERNAL, "Internal Error");
 }
 
 /*
@@ -136,3 +145,64 @@ int	http_init(struct event_base *base)
 
 	return NOERROR;
 }
+
+/*
+ * send specified file located in webroot in the specified
+ * evhttp_request
+ */
+
+static int	http_send_file(struct evhttp_request *req)
+{
+	int		fd;
+	char		*path = NULL;
+	char		*webroot;
+	struct evbuffer	*out = NULL;
+	struct stat	st;
+
+	webroot = hash_text_get_first(g_conf.http, "webroot");
+	assert(webroot != NULL);
+	asprintf(&path, "%s/%s", webroot, evhttp_request_get_uri(req));
+
+	if (path == NULL) {
+		log_err("[h] asprintf() error: %s\n", strerror(errno));
+		return ERROR;
+	}
+		
+	/* evbuffer_add_file() will close the file itself */
+	fd = open(path, O_RDONLY);
+	if (fd == -1) {
+		log_err("[h] open() error: %s\n", strerror(errno));
+		free(path);
+		return ERROR;
+	}
+
+	/* get file size */
+	if (fstat(fd, &st)) {	
+		log_err("[h] stat() error: %s\n", strerror(errno));
+		free(path);
+		return ERROR;
+	}
+
+	/* create output buffer */
+	out = evbuffer_new();
+	if (out == NULL) {
+		free(path);
+		return ERROR;
+	}
+
+	/* "put" file un output buffer */
+	if (evbuffer_add_file(out, fd, 0, st.st_size) == -1) {
+		evbuffer_free(out);
+		free(path);
+		return ERROR;
+	}
+
+	evhttp_add_header(evhttp_request_get_output_headers(req), \
+			"Server", PACKAGE_STRING);
+
+	evhttp_send_reply(req, HTTP_OK, "OK", out);
+	evbuffer_free(out);
+	free(path);
+	return NOERROR;
+}	
+
